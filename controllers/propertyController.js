@@ -25,7 +25,8 @@ exports.getPropertyById = async (req, res) => {
   const propertyId = req.params.id;
 
   try {
-      const [property] = await db.query("SELECT * FROM properties WHERE id = ?", [propertyId]);
+      // ✅ Fix: Ensure proper SQL syntax
+      const [property] = await db.query("SELECT * FROM properties WHERE id = $1", [propertyId]);
 
       if (property.length === 0) {
           return res.status(404).json({ error: "Property not found" });
@@ -43,28 +44,19 @@ exports.createProperty = async (req, res) => {
   const { title, description, images, ownerId } = req.body;
 
   try {
-      // ✅ Insert property into MySQL database
+      // ✅ Fix: Use PostgreSQL syntax
       const result = await db.query(
-          "INSERT INTO properties (title, description, images, ownerId, verified) VALUES (?, ?, ?, ?, FALSE)",
+          "INSERT INTO properties (title, description, images, ownerId, verified) VALUES ($1, $2, $3, $4, FALSE) RETURNING *",
           [title, description, JSON.stringify(images), ownerId]
       );
 
-      const newProperty = {
-          id: result.insertId,
-          title,
-          description,
-          images,
-          ownerId,
-          verified: false,
-          comments: []
-      };
-
-      res.status(201).json(newProperty);
+      res.status(201).json(result.rows[0]);  // ✅ Return the newly created property
   } catch (error) {
       console.error("❌ Error creating property:", error);
       res.status(500).json({ error: "Database error" });
   }
 };
+
 
 
 exports.addComment = (req, res) => {
