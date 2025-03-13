@@ -46,4 +46,10 @@ async function testDBConnection() {
     }
 }
 
+// Handle 404 errors for unknown routes
+app.use((req, res) => {
+    res.status(404).json({ error: "Route not found" });
+});
+
+
 testDBConnection();
