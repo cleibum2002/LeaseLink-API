@@ -5,16 +5,16 @@ exports.getAllProperties = async (req, res) => {
   const offset = parseInt(req.query.offset) || 0;
 
   try {
-      const [properties] = await db.query(
-          "SELECT * FROM properties WHERE verified = TRUE LIMIT ? OFFSET ?",
+      // ✅ Fix: Proper SQL syntax for PostgreSQL
+      const properties = await db.query(
+          "SELECT * FROM properties WHERE verified = TRUE LIMIT $1 OFFSET $2",
           [limit, offset]
       );
 
-      console.log("✅ Fetched properties:", properties); // ✅ Debug log
-      res.json(properties);
+      res.json(properties.rows);  // ✅ Use `.rows` for PostgreSQL results
   } catch (error) {
-      console.error("❌ Database Error:", error); // ✅ Log actual error
-      res.status(500).json({ error: "Database error", details: error.message });
+      console.error("❌ Database Error:", error);
+      res.status(500).json({ error: "Database error" });
   }
 };
 
