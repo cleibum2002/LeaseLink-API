@@ -1,19 +1,23 @@
 const db = require("../config/database");
 
 exports.getAllProperties = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;  // Default limit = 10
-  const offset = parseInt(req.query.offset) || 0;  // Default offset = 0
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
 
   try {
       const [properties] = await db.query(
           "SELECT * FROM properties WHERE verified = TRUE LIMIT ? OFFSET ?",
           [limit, offset]
       );
+
+      console.log("✅ Fetched properties:", properties); // ✅ Debug log
       res.json(properties);
   } catch (error) {
-      res.status(500).json({ error: "Database error" });
+      console.error("❌ Database Error:", error); // ✅ Log actual error
+      res.status(500).json({ error: "Database error", details: error.message });
   }
 };
+
 
 
 
