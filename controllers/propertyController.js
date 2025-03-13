@@ -17,25 +17,51 @@ exports.getAllProperties = async (req, res) => {
 
 
 
-exports.getPropertyById = (req, res) => {
-  const property = properties.find(p => p.id === parseInt(req.params.id));
-  if (!property) return res.status(404).json({ error: "Property not found" });
-  res.json(property);
+exports.getPropertyById = async (req, res) => {
+  const propertyId = req.params.id;
+
+  try {
+      const [property] = await db.query("SELECT * FROM properties WHERE id = ?", [propertyId]);
+
+      if (property.length === 0) {
+          return res.status(404).json({ error: "Property not found" });
+      }
+
+      res.json(property[0]);  // ✅ Return the first matching property
+  } catch (error) {
+      console.error("❌ Error fetching property by ID:", error);
+      res.status(500).json({ error: "Database error" });
+  }
 };
 
-exports.createProperty = (req, res) => {
-  const newProperty = {
-    id: properties.length + 1,
-    title: req.body.title,
-    description: req.body.description,
-    images: req.body.images || [],
-    ownerId: req.body.ownerId,
-    verified: false,
-    comments: [],
-  };
-  properties.push(newProperty);
-  res.status(201).json(newProperty);
+
+exports.createProperty = async (req, res) => {
+  const { title, description, images, ownerId } = req.body;
+
+  try {
+      // ✅ Insert property into MySQL database
+      const result = await db.query(
+          "INSERT INTO properties (title, description, images, ownerId, verified) VALUES (?, ?, ?, ?, FALSE)",
+          [title, description, JSON.stringify(images), ownerId]
+      );
+
+      const newProperty = {
+          id: result.insertId,
+          title,
+          description,
+          images,
+          ownerId,
+          verified: false,
+          comments: []
+      };
+
+      res.status(201).json(newProperty);
+  } catch (error) {
+      console.error("❌ Error creating property:", error);
+      res.status(500).json({ error: "Database error" });
+  }
 };
+
 
 exports.addComment = (req, res) => {
   const property = properties.find(p => p.id === parseInt(req.params.id));
