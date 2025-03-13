@@ -1,14 +1,13 @@
-const mysql = require("mysql2");
+const { Pool } = require("pg"); // ✅ Use PostgreSQL instead of MySQL
+require("dotenv").config();
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
+const pool = new Pool({
     user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432, // PostgreSQL default port
+    ssl: { rejectUnauthorized: false } // ✅ Required for Render's PostgreSQL
 });
 
-module.exports = pool.promise();
+module.exports = pool;
