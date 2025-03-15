@@ -2,7 +2,7 @@ const db = require("../config/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_super_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET || "SuperSecureKey123!@#";
 
 if (!JWT_SECRET) {
     console.error("🚨 ERROR: JWT_SECRET is missing! Check your .env file.");
@@ -60,11 +60,11 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: "Invalid email or password" });
         }
 
-        // ✅ Generate a new JWT token
+        // ✅ Generate a new JWT token with 7-day expiration
         const token = jwt.sign(
             { id: user.id, role: user.role },
             JWT_SECRET,
-            { expiresIn: "7d" }  // ✅ Extends JWT expiration to 7 days
+            { expiresIn: "7d" }
         );
 
         res.json({ message: "Login successful", token });
