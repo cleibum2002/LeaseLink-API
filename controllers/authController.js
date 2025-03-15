@@ -2,7 +2,6 @@ const db = require("../config/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// ✅ Make sure JWT_SECRET comes from .env
 const JWT_SECRET = process.env.JWT_SECRET || "your_super_secret_key";
 
 if (!JWT_SECRET) {
@@ -15,17 +14,19 @@ exports.register = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     try {
-        // Check if the email is already registered
-        const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-        if (existingUser.length > 0) {
+        // ✅ Check if the email already exists (Fixed for PostgreSQL)
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+
+        if (result.rows.length > 0) {
             return res.status(400).json({ error: "Email already registered" });
         }
 
-        // Hash the password
+        // ✅ Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert new user into database
-        await db.query("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)", 
+        // ✅ Insert user (Fixed for PostgreSQL)
+        await db.query(
+            "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
             [name, email, hashedPassword, role || "guest"]
         );
 
