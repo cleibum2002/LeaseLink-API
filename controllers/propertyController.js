@@ -22,22 +22,23 @@ exports.getAllProperties = async (req, res) => {
 
 
 exports.getPropertyById = async (req, res) => {
-  const propertyId = req.params.id;
+    const propertyId = parseInt(req.params.id);  // ✅ Ensure it's an integer
 
-  try {
-      // ✅ Fix: Ensure proper SQL syntax
-      const [property] = await db.query("SELECT * FROM properties WHERE id = $1", [propertyId]);
+    try {
+        // ✅ Corrected SQL Query (PostgreSQL syntax)
+        const result = await db.query("SELECT * FROM properties WHERE id = $1", [propertyId]);
 
-      if (property.length === 0) {
-          return res.status(404).json({ error: "Property not found" });
-      }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Property not found" });
+        }
 
-      res.json(property[0]);  // ✅ Return the first matching property
-  } catch (error) {
-      console.error("❌ Error fetching property by ID:", error);
-      res.status(500).json({ error: "Database error" });
-  }
+        res.json(result.rows[0]);  // ✅ Return the first matching property
+    } catch (error) {
+        console.error("❌ Error fetching property by ID:", error);
+        res.status(500).json({ error: "Database error" });
+    }
 };
+
 
 
 exports.createProperty = async (req, res) => {
