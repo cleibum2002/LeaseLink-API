@@ -45,14 +45,14 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // ✅ Use PostgreSQL syntax
-        const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+        // ✅ Ensure email is lowercase (PostgreSQL is case-sensitive)
+        const [users] = await db.query("SELECT * FROM users WHERE LOWER(email) = LOWER($1)", [email]);
 
-        if (result.rows.length === 0) {
+        if (users.rows.length === 0) {
             return res.status(400).json({ error: "Invalid email or password" });
         }
 
-        const user = result.rows[0];
+        const user = users.rows[0];
 
         // ✅ Compare hashed password
         const isMatch = await bcrypt.compare(password, user.password);
@@ -60,16 +60,16 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: "Invalid email or password" });
         }
 
-        // ✅ Generate a new JWT token with 7-day expiration
+        // ✅ Generate JWT token
         const token = jwt.sign(
             { id: user.id, role: user.role },
-            JWT_SECRET,
-            { expiresIn: "7d" }
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
         );
 
         res.json({ message: "Login successful", token });
     } catch (error) {
-        console.error("❌ Database Error on Login:", error);
-        res.status(500).json({ error: "Server error. Check logs." });
+        console.error("❌ Login Error:", error);
+        res.status(500).json({ error: "Server error" });
     }
 };
