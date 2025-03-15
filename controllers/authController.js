@@ -14,28 +14,31 @@ exports.register = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     try {
-        // ✅ Check if the email already exists (Fixed for PostgreSQL)
+        console.log("🔹 Incoming Request:", req.body); // ✅ Debug incoming data
+
         const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+        console.log("🔹 Query Result:", result.rows); // ✅ Debug existing users
 
         if (result.rows.length > 0) {
             return res.status(400).json({ error: "Email already registered" });
         }
 
-        // ✅ Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log("🔹 Hashed Password:", hashedPassword); // ✅ Debug password hash
 
-        // ✅ Insert user (Fixed for PostgreSQL)
-        await db.query(
-            "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
-            [name, email, hashedPassword, role || "guest"]
-        );
+        const insertQuery = "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *";
+        const values = [name, email, hashedPassword, role || "guest"];
 
-        res.status(201).json({ message: "User registered successfully" });
+        const insertResult = await db.query(insertQuery, values);
+        console.log("🔹 Insert Result:", insertResult.rows[0]); // ✅ Debug insert response
+
+        res.status(201).json({ message: "User registered successfully", user: insertResult.rows[0] });
     } catch (error) {
-        console.error("❌ Database Error:", error);
-        res.status(500).json({ error: "Database error" });
+        console.error("❌ Database Error on Register:", error);
+        res.status(500).json({ error: "Database error", details: error.message });
     }
 };
+
 
 // LOGIN USER
 exports.login = async (req, res) => {
